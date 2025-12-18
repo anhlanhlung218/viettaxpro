@@ -30,8 +30,6 @@ const App: React.FC = () => {
     policyYear: PolicyYear.YEAR_2024
   });
 
-  const [compareMode, setCompareMode] = useState(true);
-
   const result2024 = useMemo(() => {
     return inputs.isGrossToNet 
       ? calculateGrossToNet({ ...inputs, policyYear: PolicyYear.YEAR_2024 }) 
@@ -44,11 +42,21 @@ const App: React.FC = () => {
       : calculateNetToGross({ ...inputs, policyYear: PolicyYear.YEAR_2026 });
   }, [inputs]);
 
-  // Hiện tại sử dụng kết quả dựa trên mode chọn chính, hoặc kết quả so sánh
   const currentResult = inputs.policyYear === PolicyYear.YEAR_2024 ? result2024 : result2026;
 
   const formatVND = (amount: number) => {
     return new Intl.NumberFormat('vi-VN').format(Math.round(amount));
+  };
+
+  const handleSalaryInputChange = (e: React.ChangeEvent<HTMLInputElement>) => {
+    // Loại bỏ tất cả ký tự không phải số
+    const rawValue = e.target.value.replace(/\./g, '').replace(/[^0-9]/g, '');
+    const numericValue = parseInt(rawValue, 10);
+    
+    setInputs(p => ({ 
+      ...p, 
+      salary: isNaN(numericValue) ? 0 : numericValue 
+    }));
   };
 
   const handleExportPDF = () => {
@@ -56,7 +64,7 @@ const App: React.FC = () => {
     doc.setFontSize(22);
     doc.text("VIETTAX PRO - SO SANH CHINH SACH THUE", 105, 20, { align: 'center' });
     doc.setFontSize(10);
-    doc.text("Cập nhật quy định 2024 & Dự kiến 2026", 105, 27, { align: 'center' });
+    doc.text("Cap nhat quy dinh 2024 & Du kien 2026", 105, 27, { align: 'center' });
     doc.line(20, 35, 190, 35);
     
     let y = 50;
@@ -148,15 +156,17 @@ const App: React.FC = () => {
               <div className="space-y-10">
                 <div className="space-y-4">
                   <label className="text-xs font-black text-slate-900 uppercase tracking-widest flex justify-between">
-                    Mức lương hàng tháng
+                    Mức lương hàng tháng ({inputs.isGrossToNet ? 'Gross' : 'Net'})
                     <span className="text-indigo-600">VND</span>
                   </label>
                   <div className="relative group">
                     <input 
-                      type="number" 
-                      value={inputs.salary}
-                      onChange={(e) => setInputs(p => ({ ...p, salary: Number(e.target.value) }))}
-                      className="w-full px-10 py-8 bg-slate-50 border-2 border-slate-100 rounded-[2rem] focus:border-indigo-500 focus:bg-white outline-none transition-all text-4xl font-black text-slate-900"
+                      type="text" 
+                      inputMode="numeric"
+                      value={inputs.salary === 0 ? '' : formatVND(inputs.salary)}
+                      onChange={handleSalaryInputChange}
+                      placeholder="0"
+                      className="w-full px-10 py-8 bg-slate-50 border-2 border-slate-100 rounded-[2rem] focus:border-indigo-500 focus:bg-white outline-none transition-all text-4xl font-black text-slate-900 placeholder:text-slate-200"
                     />
                     <div className="absolute right-8 top-1/2 -translate-y-1/2 text-slate-300 font-black text-2xl group-focus-within:text-indigo-500 transition-colors">₫</div>
                   </div>
@@ -380,7 +390,7 @@ const App: React.FC = () => {
             <div className="bg-slate-900 p-2.5 rounded-2xl text-white"><Calculator className="w-6 h-6" /></div>
             <span className="text-2xl font-black tracking-tight">VietTax Pro</span>
           </div>
-          <p className="text-slate-400 text-[10px] font-black tracking-[0.3em] uppercase">© 2024 Cập nhật chính sách thuế Việt Nam mới nhất.</p>
+          <p className="text-slate-400 text-[10px] font-black tracking-[0.3em] uppercase">© 2024 Cap nhat chinh sach thue Viet Nam moi nhat.</p>
           <div className="flex items-center gap-8 text-xs font-black uppercase tracking-widest text-slate-400 hover:text-indigo-600 transition-colors cursor-pointer" onClick={() => window.scrollTo({top:0, behavior:'smooth'})}>
             Lên đầu trang
           </div>
