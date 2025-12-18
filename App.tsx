@@ -14,7 +14,8 @@ import {
   ChevronRight,
   Info,
   CalendarDays,
-  ArrowRight
+  ArrowRight,
+  ExternalLink
 } from 'lucide-react';
 import { jsPDF } from 'jspdf';
 import { Region, CalculationInputs, PolicyYear } from './types';
@@ -49,7 +50,7 @@ const App: React.FC = () => {
   };
 
   const handleSalaryInputChange = (e: React.ChangeEvent<HTMLInputElement>) => {
-    // Loại bỏ tất cả ký tự không phải số
+    // Loại bỏ tất cả ký tự không phải số (bao gồm cả dấu chấm cũ)
     const rawValue = e.target.value.replace(/\./g, '').replace(/[^0-9]/g, '');
     const numericValue = parseInt(rawValue, 10);
     
@@ -57,6 +58,13 @@ const App: React.FC = () => {
       ...p, 
       salary: isNaN(numericValue) ? 0 : numericValue 
     }));
+  };
+
+  const scrollToSection = (id: string) => {
+    const element = document.getElementById(id);
+    if (element) {
+      element.scrollIntoView({ behavior: 'smooth' });
+    }
   };
 
   const handleExportPDF = () => {
@@ -97,21 +105,21 @@ const App: React.FC = () => {
       {/* Header */}
       <nav className="fixed top-0 w-full bg-white/80 backdrop-blur-md border-b border-slate-200/60 z-[100]">
         <div className="container mx-auto px-6 h-20 flex items-center justify-between">
-          <div className="flex items-center gap-3">
+          <button onClick={() => window.scrollTo({top: 0, behavior: 'smooth'})} className="flex items-center gap-3 hover:opacity-80 transition-opacity">
             <div className="bg-indigo-600 p-2.5 rounded-2xl text-white shadow-lg shadow-indigo-200">
               <Calculator className="w-6 h-6" />
             </div>
             <span className="text-xl font-black tracking-tight text-slate-900">VietTax Pro</span>
-          </div>
+          </button>
           
           <div className="hidden md:flex items-center gap-8">
-            <a href="#tool" className="text-xs font-black text-slate-400 hover:text-indigo-600 transition-all uppercase tracking-[0.2em]">Máy tính</a>
-            <a href="#compare" className="text-xs font-black text-slate-400 hover:text-indigo-600 transition-all uppercase tracking-[0.2em]">So sánh 2026</a>
-            <a href="#knowledge" className="text-xs font-black text-slate-400 hover:text-indigo-600 transition-all uppercase tracking-[0.2em]">Kiến thức</a>
+            <button onClick={() => scrollToSection('tool')} className="text-xs font-black text-slate-400 hover:text-indigo-600 transition-all uppercase tracking-[0.2em]">Máy tính</button>
+            <button onClick={() => scrollToSection('compare')} className="text-xs font-black text-slate-400 hover:text-indigo-600 transition-all uppercase tracking-[0.2em]">So sánh 2026</button>
+            <button onClick={() => scrollToSection('knowledge')} className="text-xs font-black text-slate-400 hover:text-indigo-600 transition-all uppercase tracking-[0.2em]">Kiến thức</button>
           </div>
 
           <button 
-            onClick={() => document.getElementById('tool')?.scrollIntoView({ behavior: 'smooth' })}
+            onClick={() => scrollToSection('tool')}
             className="bg-slate-900 text-white px-8 py-3 rounded-full text-xs font-black uppercase tracking-widest hover:bg-indigo-600 transition-all shadow-xl shadow-slate-200"
           >
             Tính toán
@@ -390,9 +398,13 @@ const App: React.FC = () => {
             <div className="bg-slate-900 p-2.5 rounded-2xl text-white"><Calculator className="w-6 h-6" /></div>
             <span className="text-2xl font-black tracking-tight">VietTax Pro</span>
           </div>
-          <p className="text-slate-400 text-[10px] font-black tracking-[0.3em] uppercase">© 2024 Cap nhat chinh sach thue Viet Nam moi nhat.</p>
-          <div className="flex items-center gap-8 text-xs font-black uppercase tracking-widest text-slate-400 hover:text-indigo-600 transition-colors cursor-pointer" onClick={() => window.scrollTo({top:0, behavior:'smooth'})}>
-            Lên đầu trang
+          <div className="flex flex-col items-center md:items-end gap-2">
+            <p className="text-slate-400 text-[10px] font-black tracking-[0.3em] uppercase">© 2024 Cap nhat chinh sach thue Viet Nam moi nhat.</p>
+            <div className="flex gap-4">
+              <button onClick={() => scrollToSection('tool')} className="text-[10px] font-black text-slate-400 hover:text-indigo-600 uppercase">Máy tính</button>
+              <button onClick={() => scrollToSection('knowledge')} className="text-[10px] font-black text-slate-400 hover:text-indigo-600 uppercase">Kiến thức</button>
+              <button onClick={() => window.scrollTo({top:0, behavior:'smooth'})} className="text-[10px] font-black text-slate-400 hover:text-indigo-600 uppercase">Lên đầu</button>
+            </div>
           </div>
         </div>
       </footer>
