@@ -16,7 +16,11 @@ import {
   ArrowUpRight,
   ChevronRight,
   Calendar,
-  Zap
+  Zap,
+  Download,
+  BookOpen,
+  CheckCircle2,
+  AlertCircle
 } from 'lucide-react';
 import { 
   PieChart, 
@@ -33,6 +37,7 @@ import {
   AreaChart,
   Area
 } from 'recharts';
+import { jsPDF } from 'jspdf';
 import { Region, CalculationInputs, TaxResult } from './types';
 import { calculateGrossToNet, calculateNetToGross } from './utils/taxCalculator';
 
@@ -66,6 +71,65 @@ const App: React.FC = () => {
     return compInputs.isGrossToNet ? calculateGrossToNet(compInputs) : calculateNetToGross(compInputs);
   }, [compInputs]);
 
+  const handleExportPDF = () => {
+    const doc = new jsPDF();
+    const title = "PHIEU LUONG CHI TIET - VIETTAX PRO";
+    const date = new Date().toLocaleDateString('vi-VN');
+
+    doc.setFontSize(22);
+    doc.text("VIETTAX PRO", 105, 20, { align: 'center' });
+    doc.setFontSize(10);
+    doc.text("He thong tinh toan thue TNCN thong minh", 105, 27, { align: 'center' });
+    
+    doc.line(20, 35, 190, 35);
+    
+    doc.setFontSize(14);
+    doc.text("KET QUA PHAN TICH LUONG THANG", 20, 45);
+    doc.setFontSize(10);
+    doc.text(`Ngay xuat: ${date}`, 20, 52);
+
+    let y = 65;
+    const addLine = (label: string, value: string, isBold = false) => {
+      if (isBold) doc.setFont("helvetica", "bold");
+      else doc.setFont("helvetica", "normal");
+      doc.text(label, 20, y);
+      doc.text(value, 190, y, { align: 'right' });
+      y += 8;
+    };
+
+    addLine("Luong Gross:", `${result.grossSalary.toLocaleString()} VND`, true);
+    addLine("BHXH (8%):", `-${result.socialInsurance.toLocaleString()} VND`);
+    addLine("BHYT (1.5%):", `-${result.healthInsurance.toLocaleString()} VND`);
+    addLine("BHTN (1%):", `-${result.unemploymentInsurance.toLocaleString()} VND`);
+    y += 2;
+    addLine("Thu nhap truoc thue:", `${result.incomeBeforeTax.toLocaleString()} VND`, true);
+    addLine("Giam tru gia canh (Ban than + Phu thuoc):", `-${(result.selfDeduction + result.dependentDeduction).toLocaleString()} VND`);
+    y += 2;
+    addLine("Thu nhap tinh thue:", `${result.taxableIncome.toLocaleString()} VND`, true);
+    addLine("Thue TNCN phai nop:", `-${result.personalIncomeTax.toLocaleString()} VND`);
+    y += 5;
+    doc.setFontSize(16);
+    addLine("LUONG THUC NHAN (NET):", `${result.netSalary.toLocaleString()} VND`, true);
+    
+    y += 15;
+    doc.setFontSize(14);
+    doc.text("CHI TIET CAC BAC THUE", 20, y);
+    y += 10;
+    doc.setFontSize(10);
+    result.taxSteps.forEach(step => {
+      addLine(`Bac ${step.level} (${step.rate}%):`, `${step.amount.toLocaleString()} VND`);
+    });
+
+    if (result.taxSteps.length === 0) {
+      doc.text("Chua den nguong chiu thue TNCN.", 20, y);
+    }
+
+    doc.setFontSize(8);
+    doc.text("Tai lieu nay chi mang tinh chat tham khao.", 105, 280, { align: 'center' });
+    
+    doc.save(`VietTax_Pro_Bao_Cao_${inputs.salary}.pdf`);
+  };
+
   const chartData = [
     { name: 'Lương Net', value: result.netSalary },
     { name: 'Bảo hiểm', value: result.socialInsurance + result.healthInsurance + result.unemploymentInsurance },
@@ -91,7 +155,7 @@ const App: React.FC = () => {
     month: `Tháng ${i + 1}`,
     net: result.netSalary + (i === 11 ? bonus : 0),
     tax: result.personalIncomeTax,
-    savings: (result.netSalary * 0.3) * (i + 1) // Giả định tiết kiệm 30%
+    savings: (result.netSalary * 0.3) * (i + 1)
   }));
 
   return (
@@ -105,7 +169,7 @@ const App: React.FC = () => {
             </div>
             <div>
               <h1 className="text-xl font-black tracking-tight text-slate-800">VietTax Pro</h1>
-              <p className="text-[10px] text-slate-400 font-bold uppercase tracking-widest">Hệ thống tính toán tài chính 2024</p>
+              <p className="text-[10px] text-slate-400 font-bold uppercase tracking-widest">Pháp lý & Tài chính 2024</p>
             </div>
           </div>
           <nav className="hidden md:flex items-center gap-1 bg-slate-100 p-1 rounded-2xl border border-slate-200">
@@ -332,8 +396,11 @@ const App: React.FC = () => {
                     <FileText className="w-5 h-5 text-indigo-500" />
                     Chi tiết bảng lương tháng
                   </h3>
-                  <button className="flex items-center gap-2 text-indigo-600 text-xs font-black hover:bg-indigo-50 px-4 py-2 rounded-xl transition-all">
-                    XUẤT PHIẾU LƯƠNG PDF <ChevronRight className="w-4 h-4" />
+                  <button 
+                    onClick={handleExportPDF}
+                    className="flex items-center gap-2 text-indigo-600 text-xs font-black hover:bg-indigo-50 px-4 py-2 rounded-xl transition-all border border-indigo-100"
+                  >
+                    XUẤT PHIẾU LƯƠNG PDF <Download className="w-4 h-4" />
                   </button>
                 </div>
                 <div className="p-10">
@@ -402,6 +469,83 @@ const App: React.FC = () => {
                       <p className="text-xs text-slate-300 mt-2 font-bold uppercase">Ngưỡng chịu thuế từ 11.000.000₫ trở lên (đối với cá nhân không có người phụ thuộc)</p>
                     </div>
                   )}
+                </div>
+              </div>
+
+              {/* Detailed Tax System Explanation Section */}
+              <div className="bg-gradient-to-br from-slate-50 to-white rounded-[2.5rem] border border-slate-200 p-12 space-y-12">
+                <div className="flex items-center gap-4">
+                  <div className="p-3 bg-indigo-100 text-indigo-700 rounded-2xl">
+                    <BookOpen className="w-8 h-8" />
+                  </div>
+                  <div>
+                    <h2 className="text-2xl font-black text-slate-800">Hiểu về Hệ thống Thuế Lũy tiến Việt Nam</h2>
+                    <p className="text-slate-400 font-bold text-xs uppercase tracking-widest mt-1">Cách nhà nước tính toán nghĩa vụ thuế của bạn</p>
+                  </div>
+                </div>
+
+                <div className="grid md:grid-cols-2 gap-10">
+                  <div className="space-y-6">
+                    <h3 className="font-black text-slate-700 flex items-center gap-2">
+                      <CheckCircle2 className="w-5 h-5 text-emerald-500" />
+                      Tại sao lại là "Lũy tiến"?
+                    </h3>
+                    <p className="text-sm text-slate-500 leading-relaxed font-medium">
+                      Thuế lũy tiến từng phần nghĩa là mức thuế suất sẽ tăng dần theo từng bậc thu nhập. Thay vì đánh thuế một tỷ lệ cố định trên toàn bộ số tiền, thu nhập của bạn được chia nhỏ vào các "giỏ" (bậc), mỗi giỏ có một mức thuế riêng. 
+                      <br /><br />
+                      Hệ thống này giúp đảm bảo sự công bằng: người có thu nhập thấp đóng ít hơn, và người có thu nhập cao đóng góp nhiều hơn cho ngân sách nhà nước.
+                    </p>
+                  </div>
+                  <div className="space-y-6">
+                    <h3 className="font-black text-slate-700 flex items-center gap-2">
+                      <AlertCircle className="w-5 h-5 text-indigo-500" />
+                      Quy trình 3 bước tính toán
+                    </h3>
+                    <ul className="space-y-4">
+                      {[
+                        { step: "01", title: "Khấu trừ Bảo hiểm", desc: "Trừ 10.5% lương (BHXH, BHYT, BHTN) để lấy Thu nhập trước thuế." },
+                        { step: "02", title: "Giảm trừ Gia cảnh", desc: "Trừ 11tr (bản thân) và 4.4tr (mỗi người phụ thuộc) để lấy Thu nhập tính thuế." },
+                        { step: "03", title: "Áp dụng Biểu thuế", desc: "Chia nhỏ Thu nhập tính thuế vào 7 bậc để tính tổng tiền thuế." }
+                      ].map(i => (
+                        <li key={i.step} className="flex gap-4 items-start">
+                          <span className="text-lg font-black text-indigo-200">{i.step}</span>
+                          <div>
+                            <p className="text-sm font-black text-slate-700">{i.title}</p>
+                            <p className="text-xs text-slate-400 font-medium">{i.desc}</p>
+                          </div>
+                        </li>
+                      ))}
+                    </ul>
+                  </div>
+                </div>
+
+                <div className="bg-indigo-50/50 border border-indigo-100 rounded-3xl p-8">
+                  <h3 className="font-black text-indigo-900 mb-6 flex items-center gap-2 uppercase text-xs tracking-wider">
+                    Ví dụ minh họa thực tế (Mức lương 30,000,000đ)
+                  </h3>
+                  <div className="grid md:grid-cols-3 gap-6 text-sm">
+                    <div className="space-y-2">
+                      <p className="text-indigo-400 font-bold text-[10px] uppercase">Phần 1: Khấu trừ</p>
+                      <p className="text-slate-600 font-medium">• BHXH: 2,400,000đ (8%)</p>
+                      <p className="text-slate-600 font-medium">• BHYT: 450,000đ (1.5%)</p>
+                      <p className="text-slate-600 font-medium">• BHTN: 300,000đ (1%)</p>
+                      <p className="text-indigo-700 font-black mt-2">Còn lại: 26,850,000đ</p>
+                    </div>
+                    <div className="space-y-2">
+                      <p className="text-indigo-400 font-bold text-[10px] uppercase">Phần 2: Giảm trừ (0 NPT)</p>
+                      <p className="text-slate-600 font-medium">• Bản thân: 11,000,000đ</p>
+                      <p className="text-slate-600 font-medium">• Phụ thuộc: 0đ</p>
+                      <div className="h-4"></div>
+                      <p className="text-indigo-700 font-black mt-2">Thu nhập tính thuế: 15,850,000đ</p>
+                    </div>
+                    <div className="space-y-2">
+                      <p className="text-indigo-400 font-bold text-[10px] uppercase">Phần 3: Phân bậc thuế</p>
+                      <p className="text-slate-600 font-medium">• 5tr đầu (5%): 250,000đ</p>
+                      <p className="text-slate-600 font-medium">• 5tr tiếp (10%): 500,000đ</p>
+                      <p className="text-slate-600 font-medium">• 5.85tr còn lại (15%): 877,500đ</p>
+                      <p className="text-rose-600 font-black mt-2">Tổng thuế: 1,627,500đ</p>
+                    </div>
+                  </div>
                 </div>
               </div>
             </div>
