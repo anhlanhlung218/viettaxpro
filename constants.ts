@@ -1,9 +1,18 @@
 
-import { Region } from './types';
+import { Region, PolicyYear } from './types';
 
 export const BASE_SALARY = 2340000;
-export const DEDUCTION_SELF = 11000000;
-export const DEDUCTION_DEPENDENT = 4400000;
+
+export const DEDUCTIONS = {
+  [PolicyYear.YEAR_2024]: {
+    SELF: 11000000,
+    DEPENDENT: 4400000
+  },
+  [PolicyYear.YEAR_2026]: {
+    SELF: 15000000, // Dự kiến tăng
+    DEPENDENT: 6000000 // Dự kiến tăng
+  }
+};
 
 export const EMPLOYEE_RATES = {
   SOCIAL: 0.08,
@@ -15,7 +24,7 @@ export const EMPLOYER_RATES = {
   SOCIAL: 0.175,
   HEALTH: 0.03,
   UNEMPLOYMENT: 0.01,
-  TRADE_UNION: 0.02 // Kinh phí công đoàn
+  TRADE_UNION: 0.02
 };
 
 export const REGIONAL_MIN_WAGE = {

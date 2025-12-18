@@ -1,17 +1,16 @@
 
 import { 
   BASE_SALARY, 
-  DEDUCTION_SELF, 
-  DEDUCTION_DEPENDENT, 
+  DEDUCTIONS, 
   EMPLOYEE_RATES, 
   EMPLOYER_RATES,
   REGIONAL_MIN_WAGE, 
   TAX_BRACKETS 
 } from '../constants';
-import { TaxResult, CalculationInputs, Region } from '../types';
+import { TaxResult, CalculationInputs, PolicyYear } from '../types';
 
 export const calculateGrossToNet = (inputs: CalculationInputs): TaxResult => {
-  const { salary, dependents, region, insuranceSalary } = inputs;
+  const { salary, dependents, region, insuranceSalary, policyYear } = inputs;
   
   const insSalary = insuranceSalary === 'full' ? salary : Math.min(salary, insuranceSalary);
   const insuranceCap = BASE_SALARY * 20;
@@ -29,7 +28,13 @@ export const calculateGrossToNet = (inputs: CalculationInputs): TaxResult => {
   const employerTradeUnion = salary * EMPLOYER_RATES.TRADE_UNION;
 
   const incomeBeforeTax = salary - socialInsurance - healthInsurance - unemploymentInsurance;
-  const totalDeduction = DEDUCTION_SELF + (dependents * DEDUCTION_DEPENDENT);
+  
+  // Lấy mức giảm trừ theo chính sách năm đã chọn
+  const policyDeductions = DEDUCTIONS[policyYear];
+  const selfDeduction = policyDeductions.SELF;
+  const dependentDeduction = dependents * policyDeductions.DEPENDENT;
+  
+  const totalDeduction = selfDeduction + dependentDeduction;
   const taxableIncome = Math.max(0, incomeBeforeTax - totalDeduction);
 
   let personalIncomeTax = 0;
@@ -64,8 +69,8 @@ export const calculateGrossToNet = (inputs: CalculationInputs): TaxResult => {
     healthInsurance,
     unemploymentInsurance,
     incomeBeforeTax,
-    selfDeduction: DEDUCTION_SELF,
-    dependentDeduction: dependents * DEDUCTION_DEPENDENT,
+    selfDeduction,
+    dependentDeduction,
     taxableIncome,
     personalIncomeTax,
     netSalary,

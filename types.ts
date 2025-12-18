@@ -6,6 +6,11 @@ export enum Region {
   REGION_4 = 'Vùng 4'
 }
 
+export enum PolicyYear {
+  YEAR_2024 = '2024-2025',
+  YEAR_2026 = '2026 (Dự kiến)'
+}
+
 export interface TaxStep {
   level: number;
   range: string;
@@ -25,7 +30,6 @@ export interface TaxResult {
   personalIncomeTax: number;
   netSalary: number;
   taxSteps: TaxStep[];
-  // Employer part
   employerSocialIns: number;
   employerHealthIns: number;
   employerUnemploymentIns: number;
@@ -39,5 +43,5 @@ export interface CalculationInputs {
   region: Region;
   isGrossToNet: boolean;
   insuranceSalary: number | 'full';
-  bonus?: number;
+  policyYear: PolicyYear;
 }
